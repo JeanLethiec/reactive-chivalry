@@ -23,9 +23,9 @@ public class SoldierController {
     }
 
     @GetMapping("/{id}")
-    private Mono<Soldier> getById(@PathVariable Long id) {
-        Mono<Soldier> soldier = soldierRepository.findById(id);
-        return soldier;
+    private Mono<Soldier> getById(@PathVariable String id) {
+        return soldierRepository.findById(id)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(String.format("Could not find Soldier with id '%s'", id))));
     }
 
     @PostMapping
@@ -36,7 +36,7 @@ public class SoldierController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    private void delete(@PathVariable Long id) {
+    private void delete(@PathVariable String id) {
         soldierRepository.deleteById(id);
     }
 }
