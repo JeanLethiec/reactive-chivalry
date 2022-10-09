@@ -18,6 +18,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * A few tests playing with Reactive features, not really relevant with the application itself
+ */
 @Slf4j
 class BasicChivalryTests {
     @Test
@@ -110,6 +113,7 @@ class BasicChivalryTests {
         publish.connect();
     }
 
+    @Disabled("Parallel thread execution breaks the test")
     @Test
     void concurrency() {
         var soldiers = new ArrayList<Soldier>();

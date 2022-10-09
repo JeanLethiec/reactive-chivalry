@@ -1,6 +1,7 @@
 package com.ceihtel.chivalry.controllers;
 
 import com.ceihtel.chivalry.entities.Soldier;
+import com.ceihtel.chivalry.exceptions.SoldierNotFoundException;
 import com.ceihtel.chivalry.mappers.SoldierMapper;
 import com.ceihtel.chivalry.repositories.SoldierRepository;
 import com.ceihtel.chivalry.requests.CreateSoldierDTO;
@@ -25,7 +26,7 @@ public class SoldierController {
     @GetMapping("/{id}")
     private Mono<Soldier> getById(@PathVariable String id) {
         return soldierRepository.findById(id)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(String.format("Could not find Soldier with id '%s'", id))));
+                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format("Could not find Soldier with id '%s'", id))));
     }
 
     @PostMapping
