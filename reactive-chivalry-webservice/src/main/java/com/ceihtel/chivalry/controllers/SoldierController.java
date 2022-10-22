@@ -23,6 +23,9 @@ public class SoldierController {
     private final SoldierRepository soldierRepository;
     private final SoldierMapper soldierMapper;
 
+    public static final String MISSING_SOLDIER = "Could not find Soldier with id '%s'";
+    public static final String SOLDIER_ALREADY_EXISTS = "A soldier called '%s' already exists";
+
     @GetMapping
     public Flux<Soldier> getAll() {
         return soldierRepository.findAll();
@@ -31,21 +34,24 @@ public class SoldierController {
     @GetMapping("/{id}")
     public Mono<Soldier> getById(@PathVariable String id) {
         return soldierRepository.findById(id)
-                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format("Could not find Soldier with id '%s'", id))));
+                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, id))));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Soldier> create(@RequestBody @Valid CreateSoldierDTO createSoldierDTO) {
         return soldierRepository.findByName(createSoldierDTO.getName())
-                .flatMap(__ -> Mono.error(new SoldierAlreadyExistsException(String.format("A soldier called '%s' already exists", createSoldierDTO.getName()))))
+                .flatMap(__ -> Mono.error(new SoldierAlreadyExistsException(String.format(SOLDIER_ALREADY_EXISTS, createSoldierDTO.getName()))))
                 .switchIfEmpty(Mono.defer(() -> soldierRepository.save(soldierMapper.toEntity(createSoldierDTO))))
                 .cast(Soldier.class);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String id) {
-        soldierRepository.deleteById(id);
+    public Mono<Void> delete(@PathVariable String id) {
+        return soldierRepository.findById(id)
+                .doOnNext(soldierRepository::delete)
+                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, id))))
+                .flatMap(x -> Mono.empty());
     }
 }
