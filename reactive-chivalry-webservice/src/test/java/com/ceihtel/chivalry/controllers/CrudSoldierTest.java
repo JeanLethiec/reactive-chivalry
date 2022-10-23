@@ -127,11 +127,11 @@ public class CrudSoldierTest {
 
         @Test
         void shouldReturnOneSoldier() {
-            Mockito.when(soldierRepository.findById("1234")).thenReturn(
+            Mockito.when(soldierRepository.findByName("Roger")).thenReturn(
                     Mono.just(getSoldier("Roger", "Crossbow")));
 
             webTestClient
-                    .get().uri("/soldiers/1234")
+                    .get().uri("/soldiers/Roger")
                     .exchange()
                     .expectStatus()
                     .isOk()
@@ -139,23 +139,23 @@ public class CrudSoldierTest {
                     .jsonPath("$.name").isEqualTo("Roger")
                     .jsonPath("$.weapon").isEqualTo("Crossbow");
 
-            Mockito.verify(soldierRepository).findById("1234");
+            Mockito.verify(soldierRepository).findByName("Roger");
             Mockito.verifyNoMoreInteractions(soldierRepository);
         }
 
         @Test
         void shouldFailWhenMissing() {
-            Mockito.when(soldierRepository.findById("1234")).thenReturn(Mono.empty());
+            Mockito.when(soldierRepository.findByName("Roger")).thenReturn(Mono.empty());
 
             webTestClient
-                    .get().uri("/soldiers/1234")
+                    .get().uri("/soldiers/Roger")
                     .exchange()
                     .expectStatus()
                     .isNotFound()
                     .expectBody()
-                    .jsonPath("$.error").isEqualTo("Could not find Soldier with id '1234'");
+                    .jsonPath("$.error").isEqualTo("Could not find a soldier called 'Roger'");
 
-            Mockito.verify(soldierRepository).findById("1234");
+            Mockito.verify(soldierRepository).findByName("Roger");
             Mockito.verifyNoMoreInteractions(soldierRepository);
         }
     }
@@ -167,24 +167,24 @@ public class CrudSoldierTest {
 
         @Test
         void shouldCreateSoldier() {
-            Mockito.when(soldierRepository.findByName("Géraud")).thenReturn(Mono.empty());
-            Mockito.when(soldierRepository.save(any(Soldier.class))).thenReturn(Mono.just(getSoldier("Géraud", "Shortsword")));
+            Mockito.when(soldierRepository.findByName("Roger")).thenReturn(Mono.empty());
+            Mockito.when(soldierRepository.save(any(Soldier.class))).thenReturn(Mono.just(getSoldier("Roger", "Shortsword")));
 
             webTestClient
                     .post().uri("/soldiers")
                     .header(CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .body(BodyInserters.fromValue("{ \"name\": \"Géraud\", \"weapon\": \"Shortsword\" }"))
+                    .body(BodyInserters.fromValue("{ \"name\": \"Roger\", \"weapon\": \"Shortsword\" }"))
                     .exchange()
                     .expectStatus()
                     .isCreated()
                     .expectBody()
-                    .jsonPath("$.name").isEqualTo("Géraud")
+                    .jsonPath("$.name").isEqualTo("Roger")
                     .jsonPath("$.weapon").isEqualTo("Shortsword");
 
-            Mockito.verify(soldierRepository).findByName("Géraud");
+            Mockito.verify(soldierRepository).findByName("Roger");
             Mockito.verify(soldierRepository).save(MockitoHamcrest.argThat(allOf(
                     Matchers.isA(Soldier.class),
-                    Matchers.<Soldier>hasProperty("name", is("Géraud")),
+                    Matchers.<Soldier>hasProperty("name", is("Roger")),
                     Matchers.<Soldier>hasProperty("weapon", is("Shortsword")))));
             Mockito.verifyNoMoreInteractions(soldierRepository);
         }
@@ -228,16 +228,16 @@ public class CrudSoldierTest {
 
         @Test
         void shouldDeleteSoldier() {
-            Mockito.when(soldierRepository.findById("12345")).thenReturn(Mono.just(getSoldier("Roger", "Crossbow")));
+            Mockito.when(soldierRepository.findByName("Roger")).thenReturn(Mono.just(getSoldier("Roger", "Crossbow")));
             Mockito.when(soldierRepository.delete(any(Soldier.class))).thenReturn(Mono.empty());
 
             webTestClient
-                    .delete().uri("/soldiers/12345")
+                    .delete().uri("/soldiers/Roger")
                     .exchange()
                     .expectStatus()
                     .isNoContent();
 
-            Mockito.verify(soldierRepository).findById("12345");
+            Mockito.verify(soldierRepository).findByName("Roger");
             Mockito.verify(soldierRepository).delete(MockitoHamcrest.argThat(allOf(
                     Matchers.isA(Soldier.class),
                     Matchers.<Soldier>hasProperty("name", is("Roger")),
@@ -247,17 +247,17 @@ public class CrudSoldierTest {
 
         @Test
         void failure_missingSoldier() {
-            Mockito.when(soldierRepository.findById("1234")).thenReturn(Mono.empty());
+            Mockito.when(soldierRepository.findByName("Roger")).thenReturn(Mono.empty());
 
             webTestClient
-                    .delete().uri("/soldiers/1234")
+                    .delete().uri("/soldiers/Roger")
                     .exchange()
                     .expectStatus()
                     .isNotFound()
                     .expectBody()
-                    .jsonPath("$.error").isEqualTo("Could not find Soldier with id '1234'");
+                    .jsonPath("$.error").isEqualTo("Could not find a soldier called 'Roger'");
 
-            Mockito.verify(soldierRepository).findById("1234");
+            Mockito.verify(soldierRepository).findByName("Roger");
             Mockito.verifyNoMoreInteractions(soldierRepository);
         }
     }

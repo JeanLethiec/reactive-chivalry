@@ -23,7 +23,7 @@ public class SoldierController {
     private final SoldierRepository soldierRepository;
     private final SoldierMapper soldierMapper;
 
-    public static final String MISSING_SOLDIER = "Could not find Soldier with id '%s'";
+    public static final String MISSING_SOLDIER = "Could not find a soldier called '%s'";
     public static final String SOLDIER_ALREADY_EXISTS = "A soldier called '%s' already exists";
 
     @GetMapping
@@ -31,10 +31,10 @@ public class SoldierController {
         return soldierRepository.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Mono<Soldier> getById(@PathVariable String id) {
-        return soldierRepository.findById(id)
-                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, id))));
+    @GetMapping("/{name}")
+    public Mono<Soldier> getByName(@PathVariable String name) {
+        return soldierRepository.findByName(name)
+                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, name))));
     }
 
     @PostMapping
@@ -46,12 +46,12 @@ public class SoldierController {
                 .cast(Soldier.class);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{name}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> delete(@PathVariable String id) {
-        return soldierRepository.findById(id)
-                .doOnNext(soldierRepository::delete)
-                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, id))))
-                .flatMap(x -> Mono.empty());
+    public Mono<Void> delete(@PathVariable String name) {
+        return soldierRepository.findByName(name)
+                .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, name))))
+                .flatMap(soldierRepository::delete)
+                .then(Mono.empty());
     }
 }
