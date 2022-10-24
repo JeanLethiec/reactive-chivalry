@@ -219,6 +219,20 @@ public class CrudSoldierTest {
             Mockito.verify(soldierRepository).findByName("Roger");
             Mockito.verifyNoMoreInteractions(soldierRepository);
         }
+
+        @Test
+        void shouldCreateRandomSoldier() {
+            Mockito.when(soldierRepository.save(any(Soldier.class))).thenReturn(Mono.just(getSoldier("Roger", "Shortsword")));
+
+            webTestClient
+                    .post().uri("/soldiers/random")
+                    .exchange()
+                    .expectStatus()
+                    .isCreated();
+
+            Mockito.verify(soldierRepository).save(any(Soldier.class));
+            Mockito.verifyNoMoreInteractions(soldierRepository);
+        }
     }
 
     @Nested
@@ -258,6 +272,31 @@ public class CrudSoldierTest {
                     .jsonPath("$.error").isEqualTo("Could not find a soldier called 'Roger'");
 
             Mockito.verify(soldierRepository).findByName("Roger");
+            Mockito.verifyNoMoreInteractions(soldierRepository);
+        }
+
+        @Test
+        void shouldDeleteAll() {
+            Mockito.when(soldierRepository.findAll()).thenReturn(Flux.just(
+                    getSoldier("Roger", "Crossbow"),
+                    getSoldier("Géraud", "Polearm")));
+            Mockito.when(soldierRepository.delete(any(Soldier.class))).thenReturn(Mono.empty());
+
+            webTestClient
+                    .delete().uri("/soldiers")
+                    .exchange()
+                    .expectStatus()
+                    .isNoContent();
+
+            Mockito.verify(soldierRepository).findAll();
+            Mockito.verify(soldierRepository).delete(MockitoHamcrest.argThat(allOf(
+                    Matchers.isA(Soldier.class),
+                    Matchers.<Soldier>hasProperty("name", is("Roger")),
+                    Matchers.<Soldier>hasProperty("weapon", is("Crossbow")))));
+            Mockito.verify(soldierRepository).delete(MockitoHamcrest.argThat(allOf(
+                    Matchers.isA(Soldier.class),
+                    Matchers.<Soldier>hasProperty("name", is("Géraud")),
+                    Matchers.<Soldier>hasProperty("weapon", is("Polearm")))));
             Mockito.verifyNoMoreInteractions(soldierRepository);
         }
     }

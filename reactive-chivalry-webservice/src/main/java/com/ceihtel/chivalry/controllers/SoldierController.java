@@ -39,11 +39,17 @@ public class SoldierController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Soldier> create(@RequestBody @Valid CreateSoldierDTO createSoldierDTO) {
+    public Mono<Soldier> createWithName(@RequestBody @Valid CreateSoldierDTO createSoldierDTO) {
         return soldierRepository.findByName(createSoldierDTO.getName())
                 .flatMap(__ -> Mono.error(new SoldierAlreadyExistsException(String.format(SOLDIER_ALREADY_EXISTS, createSoldierDTO.getName()))))
                 .switchIfEmpty(Mono.defer(() -> soldierRepository.save(soldierMapper.toEntity(createSoldierDTO))))
                 .cast(Soldier.class);
+    }
+
+    @PostMapping("/random")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<Soldier> createRandom() {
+        return soldierRepository.save(new Soldier());
     }
 
     @DeleteMapping("/{name}")
@@ -51,6 +57,14 @@ public class SoldierController {
     public Mono<Void> delete(@PathVariable String name) {
         return soldierRepository.findByName(name)
                 .switchIfEmpty(Mono.error(new SoldierNotFoundException(String.format(MISSING_SOLDIER, name))))
+                .flatMap(soldierRepository::delete)
+                .then(Mono.empty());
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> deleteAll() {
+        return soldierRepository.findAll()
                 .flatMap(soldierRepository::delete)
                 .then(Mono.empty());
     }
